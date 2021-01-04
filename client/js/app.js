@@ -8,48 +8,64 @@
  * https://www.skysilk.com/blog/2018/create-real-time-chat-app-nodejs/
  * 
  */
-var chatText = document.getElementById('chat-text')
-var chatInput = document.getElementById('chat-input')
-var chatForm = document.getElementById('chat-form')
+var chatText = document.getElementById('chatText')
+var chatInput = document.getElementById('chatInput')
+var chatForm = document.getElementById('chatForm')
+var socketIdSpan = document.getElementById('socketId')
 
 var socket = io()
 var typing = false
+var chatId = ''
 
 function addChatMessage(chat) {
-  chatText.innerHTML += `<div class="chatCell">${chat.sender}: ${chat.text}</div>`
+  switch(chat.type) {
+    case 'message': 
+      if(chat.sender === chatId) {
+        // It's me!
+        chatText.innerHTML += `<div class="chatCell">${chat.sender} (you): ${chat.text}</div>`
+      } else {
+        chatText.innerHTML += `<div class="chatCell">${chat.sender}: ${chat.text}</div>`
+      }
+      break;
+    case 'status':
+      chatText.innerHTML += `<div class="chatCell status">${chat.text}</div>`
+      break
+  }
 }
 
-socket.on('chatHistory', function (history) {
+socket.on('chatHistory', (history) => {
   for(var i in history) {
     addChatMessage(history[i])
   }
+  chatId = socket.id
+  socketIdSpan.innerHTML = socket.id  
 })
 
 //add a chat cell to our chat list view, and scroll to the bottom
-socket.on('addToChat', function (chat) {
+socket.on('addToChat', (chat) => {
   console.log('received a chat message from the server.')
   addChatMessage(chat)
   chatText.scrollTop = chatText.scrollHeight
 })
 
-chatForm.onsubmit = function (e) {
+chatForm.onsubmit = (event) => {
   //prevent the form from refreshing the page
-  e.preventDefault()
+  event.preventDefault()
   //call sendMsgToServer socket function, with form text value as argument
   socket.emit('sendMsgToServer', chatInput.value)
-  chatInput.value = ""
+  chatInput.value = ''
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-  document.getElementById('chat-input').addEventListener('focus', function () {
+document.addEventListener('DOMContentLoaded', () => {
+  chatInput.addEventListener('focus', () => {
     typing = true
   })
-  document.getElementById('chat-input').addEventListener('blur', function () {
+  chatInput.addEventListener('blur', () => {
     typing = false
   })
 })
 
-document.onkeyup = function (event) {
+document.onkeyup = (event) => {
   //user pressed and released enter key
   if (event.key === 'Enter') {
     if (!typing) {

@@ -9,7 +9,7 @@ body {
   border-radius: 6px;
   margin: 5% auto auto auto;
   padding: 10px;
-  text-align: center;
+  text-align: left;
   box-shadow: 5px 5px 10px #888888;
 }
 
@@ -24,7 +24,7 @@ body {
   overflow-y: scroll;
 }
 
-#chat-input {
+#chatInput {
   width:30%;
   height:30px;
 }
@@ -45,4 +45,12 @@ body {
 
 .btn:hover {
   background: #2CC06B;
+}
+
+.status {
+  color: plum;
+}
+
+.ownMessage {
+  background: lightgoldenrodyellow;
 }

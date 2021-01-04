@@ -8,6 +8,7 @@
  * https://www.skysilk.com/blog/2018/create-real-time-chat-app-nodejs/
  * 
  */
+const e = require('cors')
 const express = require('express')
 const app = express()
 const server = require('http').createServer(app)
@@ -19,12 +20,6 @@ var chatHistory = [] // make this a queue of 100 items, perhaps?
 
 app.use('/', express.static(__dirname + '/client'))
 
-function broadcastChat(chat) {
-  for (var id in clients) {
-    clients[id].emit('addToChat', chat)
-  }
-}
-
 io.sockets.on('connection', (socket) => {
   clients[socket.id] = socket
   var chat = {
@@ -34,17 +29,24 @@ io.sockets.on('connection', (socket) => {
   }
   console.log(`${socket.id} has joined.`)
   chatHistory.push(chat)
-  broadcastChat(chat)
-  // Send the client the current chat history to catch up
-  socket.emit('chatHistory', chatHistory)
-
+  for(var id in clients) {
+    if(id === socket.id) {
+      // Send the client the current chat history to catch up
+      socket.emit('chatHistory', chatHistory)
+    } else {
+      // Send everyone else just the latest message
+      clients[id].emit('addToChat', chat)
+    }
+  }
 
   socket.on('sendMsgToServer', (message) => {
     var chat = {'type': 'message', 'sender': socket.id, 'text': message}
 
-    console.log(`${chat.sender} sent a message: ${chat.message}`)
+    console.log(`${chat.sender} sent a message: ${chat.text}`)
     chatHistory.push(chat)
-    broadcastChat(chat)
+    for(var id in clients) {
+      clients[id].emit('addToChat', chat)
+    }
   })
 
   socket.on('disconnect', () => {
