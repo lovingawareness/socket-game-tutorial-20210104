@@ -17,10 +17,18 @@ var timerText = document.getElementById('timer')
 var socket = io()
 var typing = false
 var chatId = ''
+var history = []
 
 var chatStartTime = Date.now()
 var chatEndTime = chatStartTime + 10000
 var timer
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    hoursWorked: 0
+  }
+})
 
 function addChatMessage(chat) {
   var timeText = `${(chat.time - chatStartTime)/1000}s`
