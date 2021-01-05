@@ -12,38 +12,69 @@ var chatText = document.getElementById('chatText')
 var chatInput = document.getElementById('chatInput')
 var chatForm = document.getElementById('chatForm')
 var socketIdSpan = document.getElementById('socketId')
+var timerText = document.getElementById('timer')
 
 var socket = io()
 var typing = false
 var chatId = ''
 
+var chatStartTime = Date.now()
+var chatEndTime = chatStartTime + 10000
+var timer
+
 function addChatMessage(chat) {
+  var timeText = `${(chat.time - chatStartTime)/1000}s`
   switch(chat.type) {
     case 'message': 
       if(chat.sender === chatId) {
         // It's me!
-        chatText.innerHTML += `<div class="chatCell">${chat.sender} (you): ${chat.text}</div>`
+        chatText.innerHTML += `<div class="chatCell">${timeText} ${chat.sender} (you): ${chat.text}</div>`
       } else {
-        chatText.innerHTML += `<div class="chatCell">${chat.sender}: ${chat.text}</div>`
+        chatText.innerHTML += `<div class="chatCell">${timeText} ${chat.sender}: ${chat.text}</div>`
       }
       break;
     case 'status':
-      chatText.innerHTML += `<div class="chatCell status">${chat.text}</div>`
+      chatText.innerHTML += `<div class="chatCell status">${timeText} ${chat.text}</div>`
       break
   }
 }
 
-socket.on('chatHistory', (history) => {
+function resetToHistory(history) {
+  chatText.innerHTML = ''
   for(var i in history) {
     addChatMessage(history[i])
   }
+}
+
+timer = setInterval(function() {
+  var timeRemaining = Math.ceil((chatEndTime - Date.now())/1000)
+  if(timeRemaining >= 0) {
+    timerText.innerHTML = timeRemaining
+  }
+}, 500)
+socket.on('chatReset', (data) => {
+  resetToHistory(data.history)
+  chatStartTime = data.chatStartTime
+  chatEndTime = data.chatEndTime
+  clearInterval(timer)
+  timer = setInterval(function() {
+    var timeRemaining = Math.floor((chatEndTime - Date.now())/1000)
+    if(timeRemaining >= 0) {
+      timerText.innerHTML = timeRemaining
+    }
+  }, 500)
+})
+
+socket.on('chatHistory', (data) => {
+  resetToHistory(data.history)
   chatId = socket.id
-  socketIdSpan.innerHTML = socket.id  
+  socketIdSpan.innerHTML = socket.id
+  chatStartTime = data.chatStartTime
+  chatEndTime = data.chatEndTime
 })
 
 //add a chat cell to our chat list view, and scroll to the bottom
 socket.on('addToChat', (chat) => {
-  console.log('received a chat message from the server.')
   addChatMessage(chat)
   chatText.scrollTop = chatText.scrollHeight
 })

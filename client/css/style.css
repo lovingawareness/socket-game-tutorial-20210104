@@ -54,3 +54,8 @@ body {
 .ownMessage {
   background: lightgoldenrodyellow;
 }
+
+.reset {
+  color: fuchsia;
+  background-color: forestgreen;
+}
